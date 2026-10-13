@@ -10,7 +10,7 @@ class ShoppingApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
+      debugShowCheckedModeBanner: true,
       theme: ThemeData(colorSchemeSeed: Colors.green),
       home: const HomeScreen(title: 'Shopping List'),
     );
@@ -56,13 +56,13 @@ class _HomeScreenState extends State<HomeScreen> {
     controller.clear();
   }
 
-  void deleteItem(index) {
+  void deleteItem(int index) {
     setState(() {
       items.removeAt(index);
     });
   }
 
-  void editItem(index) {
+  void editItem(int index) {
     setState((){
 
     });
@@ -74,7 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  void markSold(index) {
+  void markSold(int index) {
     var item = items.elementAt(index);
     setState(() {
       item.sold = !item.sold;
@@ -98,13 +98,24 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           Expanded(
-            child: ListView.builder(
+            child:items.isEmpty 
+            ? const Center(
+              child: Text(
+                'List is empty', 
+                style: TextStyle(
+                  fontSize: 18, 
+                  color: Colors.black54
+                  ),
+                ),
+              )
+            :ListView.builder(
               itemCount: items.length,
               itemBuilder: (context, index) {
+                final item = items[index];
                 return ListTile(
                   leading: const Icon(Icons.shopping_basket),
                   title: Text(
-                    items[index].name,
+                    item.name,
                     style: items[index].sold
                         ? TextStyle(
                             decoration: TextDecoration.lineThrough,
