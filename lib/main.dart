@@ -58,9 +58,36 @@ class _HomeScreenState extends State<HomeScreen> {
           .showSnackBar(const SnackBar(content: Text('Type an item first')));
       return;
     }
-    setState(() {
-      items.add(Item(text, false));
-    });
+
+    final matches = items.where(
+      (item) => item.name.trim().toLowerCase() == text.toLowerCase(),
+    );
+
+    if (matches.isNotEmpty) {
+      final existing = matches.first;
+
+      setState(() {
+        existing.quantity++;
+      });
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              '${existing.name} is already on the list: '
+              'now ×${existing.quantity}',
+            ),
+          ),
+        );
+    } else {
+      setState(() {
+        items.add(Item(text, false));
+      });
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text('$text added')));
+    }
     controller.clear();
   }
 
@@ -113,7 +140,10 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.all(16),
             child: TextField(
               controller: controller,
-              decoration: const InputDecoration(hintText: 'Add an item',focusColor: Colors.white),
+              decoration: const InputDecoration(
+                hintText: 'Add an item',
+                focusColor: Colors.white,
+              ),
               onSubmitted: (_) => addItem(),
             ),
           ),
