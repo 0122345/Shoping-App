@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
- 
+
 void main() {
   runApp(const ShoppingApp());
 }
@@ -10,11 +10,27 @@ class ShoppingApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: true,
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(colorSchemeSeed: Colors.green),
       home: const HomeScreen(title: 'Shopping List'),
     );
   }
+}
+
+class Item {
+  String name;
+  bool sold;
+  int quantity;
+  String note;
+  String category;
+
+  Item(
+    this.name,
+    this.sold, {
+    this.quantity = 1,
+    this.note = '',
+    this.category = 'Food',
+  });
 }
 
 class HomeScreen extends StatefulWidget {
@@ -26,16 +42,9 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class Item {
-  String name;
-  bool sold;
-  Item(this.name, this.sold);
-}
-
 class _HomeScreenState extends State<HomeScreen> {
-
   final List<Item> items = [
-    Item('Milk', false),
+    Item('Milk', false, category: 'Drinks'),
     Item('Bread', false),
     Item('Rice', false),
   ];
@@ -45,9 +54,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void addItem() {
     final text = controller.text.trim();
     if (text.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Type an item first')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Type an item first')));
       return;
     }
     setState(() {
@@ -63,9 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void editItem(int index) {
-    setState((){
-
-    });
+    setState(() {});
   }
 
   @override
@@ -81,56 +87,84 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void changeQuantity(Item item, int change) {
+    setState(() {
+      if (change > 0) {
+        item.quantity++;
+      } else if (item.quantity > 1) {
+        item.quantity--;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 164, 215, 236),
-      appBar: AppBar(title: Text(widget.title, style: const TextStyle(color: Color.fromARGB(255, 229, 255, 136)))),
+      backgroundColor: const Color.fromARGB(255, 180, 255, 240),
+      appBar: AppBar(
+        title: Text(
+          widget.title,
+          style: const TextStyle(color: Color.fromARGB(255, 6, 64, 255)),
+        ),
+      ),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
             child: TextField(
               controller: controller,
-              decoration: const InputDecoration(hintText: 'Add an item',
-               ),
+              decoration: const InputDecoration(hintText: 'Add an item',focusColor: Colors.white),
               onSubmitted: (_) => addItem(),
             ),
           ),
           Expanded(
-            child:items.isEmpty 
-            ? const Center(
-              child: Text(
-                'List is empty', 
-                style: TextStyle(
-                  fontSize: 18, 
-                  color: Colors.black54
+            child: items.isEmpty
+                ? const Center(
+                    child: Text(
+                      'List is empty',
+                      style: TextStyle(fontSize: 18, color: Colors.black54),
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: items.length,
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      return ListTile(
+                        leading: const Icon(Icons.shopping_basket),
+                        title: Text(
+                          item.name,
+                          style: items[index].sold
+                              ? TextStyle(
+                                  decoration: TextDecoration.lineThrough,
+                                  color: Colors.red,
+                                )
+                              : TextStyle(decoration: TextDecoration.none),
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              tooltip: 'Decrease quantity',
+                              onPressed: () => changeQuantity(item, -1),
+                              icon: const Icon(Icons.remove),
+                            ),
+                            Text('${item.quantity}'),
+                            IconButton(
+                              tooltip: 'Increase quantity',
+                              onPressed: () => changeQuantity(item, 1),
+                              icon: const Icon(Icons.add),
+                            ),
+
+                            IconButton(
+                              onPressed: () => deleteItem(index),
+                              icon: Icon(Icons.delete, color: Colors.red),
+                            ),
+                          ],
+                        ),
+                        onTap: () => markSold(index),
+                      );
+                    },
                   ),
-                ),
-              )
-            :ListView.builder(
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                final item = items[index];
-                return ListTile(
-                  leading: const Icon(Icons.shopping_basket),
-                  title: Text(
-                    item.name,
-                    style: items[index].sold
-                        ? TextStyle(
-                            decoration: TextDecoration.lineThrough,
-                            color: Colors.red,
-                          )
-                        : TextStyle(decoration: TextDecoration.none),
-                  ),
-                  trailing: IconButton(
-                    onPressed: () => deleteItem(index),
-                    icon: Icon(Icons.delete, color: Colors.red),
-                  ),
-                  onTap: () => markSold(index),
-                );
-              },
-            ),
           ),
         ],
       ),
