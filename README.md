@@ -1,5 +1,14 @@
 # Think
 
+## Screenshots
+
+![Screenshot 1](screenshots/Screenshot%202026-10-13%20230618.png)
+![Screenshot 2](screenshots/Screenshot%202026-10-13%20232310.png)
+![Screenshot 3](screenshots/Screenshot%202026-10-13%20233852.png)
+![Screenshot 4](screenshots/Screenshot%202026-10-13%20234859.png)
+![Screenshot 5](screenshots/Screenshot%202026-10-14%20000449.png)
+![Screenshot 6](screenshots/Screenshot%202026-10-14%20001500.png)
+
 ## 1. Why does deleting by index fail when a filter is active?
 
 When a filter is active, the displayed list can contain different items and positions from the original `items` list. Therefore, the index of a displayed row may refer to a different item in the original list. I fixed this by passing the actual `Item` object to the delete function and removing that object instead of using the displayed index.
