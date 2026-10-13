@@ -50,6 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   final controller = TextEditingController();
+  String filter = 'All';
 
   void addItem() {
     final text = controller.text.trim();
@@ -142,8 +143,36 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  List<Item> get shownItems {
+    if (filter == 'To buy') {
+      return items.where((item) => !item.sold).toList();
+    }
+
+    if (filter == 'Bought') {
+      return items.where((item) => item.sold).toList();
+    }
+
+    final toBuy = items.where((item) => !item.sold);
+    final bought = items.where((item) => item.sold);
+
+    return [...toBuy, ...bought];
+  }
+
+void openDetails(Item item) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DetailsScreen(item: item),
+      ),
+    ).then((_) {
+      if (!mounted) return;
+      setState(() {});
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final shown = shownItems;
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 180, 255, 240),
       appBar: AppBar(
@@ -165,6 +194,21 @@ class _HomeScreenState extends State<HomeScreen> {
               onSubmitted: (_) => addItem(),
             ),
           ),
+           const SizedBox(height: 12),
+           Wrap(
+                  spacing: 8,
+                  children: ['All', 'To buy', 'Bought'].map((choice) {
+                    return ChoiceChip(
+                      label: Text(choice),
+                      selected: filter == choice,
+                      onSelected: (_) {
+                        setState(() {
+                          filter = choice;
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
           Expanded(
             child: items.isEmpty
                 ? const Center(
@@ -173,21 +217,38 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: TextStyle(fontSize: 18, color: Colors.black54),
                     ),
                   )
+                : shown.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'Nothing here. ',
+                        style: TextStyle(fontSize: 18, color: Colors.black54),
+                      ),
+                    ) 
                 : ListView.builder(
-                    itemCount: items.length,
+                    itemCount: shown.length,
                     itemBuilder: (context, index) {
-                      final item = items[index];
+                      final item = shown[index];
+
+                      final details = [
+                        if (item.category.isNotEmpty) item.category,
+                            if (item.note.trim().isNotEmpty)
+                              item.note.trim(),
+                      ].join(' . ');
+
                       return ListTile(
                         leading: const Icon(Icons.shopping_basket),
                         title: Text(
                           item.name,
-                          style: items[index].sold
-                              ? TextStyle(
-                                  decoration: TextDecoration.lineThrough,
-                                  color: Colors.red,
-                                )
-                              : TextStyle(decoration: TextDecoration.none),
+                          style:  
+                              TextStyle(
+                                  decoration: item.sold
+                                    ? TextDecoration.lineThrough
+                                    : TextDecoration.none,
+                                color: item.sold ? Colors.red : null,),
                         ),
+                       subtitle: Text(details),
+                            onTap: () => markSold(items.indexOf(item)),
+                            onLongPress: () => openDetails(item),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -209,7 +270,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ],
                         ),
-                        onTap: () => markSold(index),
                       );
                     },
                   ),
@@ -219,6 +279,119 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: addItem,
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+class DetailsScreen extends StatefulWidget {
+  const DetailsScreen({super.key, required this.item});
+
+  final Item item;
+
+  @override
+  State<DetailsScreen> createState() => _DetailsScreenState();
+}
+
+class _DetailsScreenState extends State<DetailsScreen> {
+  final nameController = TextEditingController();
+  final noteController = TextEditingController();
+
+  String category = 'Food';
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Fill the fields with the current item values.
+    nameController.text = widget.item.name;
+    noteController.text = widget.item.note;
+    category = widget.item.category;
+  }
+
+  void saveDetails() {
+    final name = nameController.text.trim();
+
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Item name cannot be empty'),
+        ),
+      );
+      return;
+    }
+
+    // Only save changes when Save is pressed.
+    widget.item.name = name;
+    widget.item.note = noteController.text.trim();
+    widget.item.category = category;
+
+    Navigator.pop(context);
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    noteController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Item details'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: ListView(
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: 'Item name',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: noteController,
+              decoration: const InputDecoration(
+                labelText: 'Note',
+                hintText: 'For example, the 1 litre bottle',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Category',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: ['Food', 'Drinks', 'Home'].map((choice) {
+                return ChoiceChip(
+                  label: Text(choice),
+                  selected: category == choice,
+                  onSelected: (_) {
+                    setState(() {
+                      category = choice;
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: saveDetails,
+              child: const Text('Save'),
+            ),
+          ],
+        ),
       ),
     );
   }
