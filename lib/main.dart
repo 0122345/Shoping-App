@@ -91,10 +91,28 @@ class _HomeScreenState extends State<HomeScreen> {
     controller.clear();
   }
 
-  void deleteItem(int index) {
+  void deleteItem(Item item) {
+
+    final position = items.indexOf(item);
+    if (position == -1) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
     setState(() {
-      items.removeAt(index);
+      items.remove(item);
     });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${item.name} removed'),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () {
+            setState(() {
+              items.insert(position, item);
+            });
+          },
+        ),
+      ),
+    );
   }
 
   void editItem(int index) {
@@ -186,7 +204,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
 
                             IconButton(
-                              onPressed: () => deleteItem(index),
+                              onPressed: () => deleteItem(item),
                               icon: Icon(Icons.delete, color: Colors.red),
                             ),
                           ],
